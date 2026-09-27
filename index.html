@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>漫步上三川 - 日本小镇探索</title>
-
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -13,9 +11,7 @@
 
 <div id="game-wrapper">
 
-  <!-- ===== 上部HUD ===== -->
   <header id="hud">
-
     <div class="title-area">
       <div class="small-title">日本・栃木县</div>
       <div class="game-title">漫步上三川</div>
@@ -32,13 +28,11 @@
     </div>
 
     <button id="libraryButton">
-      📖 日本语图鉴
+      日本语图鉴
     </button>
-
   </header>
 
 
-  <!-- ===== ゲーム画面 ===== -->
   <main id="game-container">
 
     <canvas
@@ -47,10 +41,7 @@
       height="720">
     </canvas>
 
-
-    <!-- 操作説明 -->
     <div id="controls">
-
       <div>
         <kbd>WASD</kbd>
         <span>移动</span>
@@ -65,38 +56,25 @@
         <kbd>L</kbd>
         <span>日本语图鉴</span>
       </div>
-
     </div>
 
-
-    <!-- インタラクション表示 -->
     <div id="interactionPrompt" class="hidden">
       E　调查
     </div>
 
-
-    <!-- 会話ウィンドウ -->
     <div id="dialogueBox" class="hidden">
-
       <div id="speakerName"></div>
-
       <div id="dialogueJapanese"></div>
-
       <div id="dialogueChinese"></div>
 
       <div class="dialogue-next">
         E / Enter　继续
       </div>
-
     </div>
 
-
-    <!-- エリア名表示 -->
     <div id="areaSplash" class="hidden">
-
       <div id="areaSplashJapanese"></div>
       <div id="areaSplashChinese"></div>
-
     </div>
 
   </main>
@@ -104,10 +82,8 @@
 </div>
 
 
-<!-- ===== 日本語カード取得 ===== -->
-
+<!-- 単語カード -->
 <div id="cardPopup" class="hidden">
-
   <div class="card">
 
     <div class="card-new">
@@ -115,11 +91,8 @@
     </div>
 
     <div id="cardJapanese"></div>
-
     <div id="cardReading"></div>
-
     <div id="cardChinese"></div>
-
     <div id="cardExample"></div>
 
     <button id="cardClose">
@@ -127,12 +100,10 @@
     </button>
 
   </div>
-
 </div>
 
 
-<!-- ===== ライブラリ ===== -->
-
+<!-- 図鑑 -->
 <div id="libraryOverlay" class="hidden">
 
   <div id="libraryPanel">
@@ -146,12 +117,9 @@
         </p>
       </div>
 
-      <button id="libraryClose">
-        ×
-      </button>
+      <button id="libraryClose">×</button>
 
     </div>
-
 
     <div class="library-progress">
 
@@ -165,7 +133,6 @@
 
     </div>
 
-
     <div id="libraryGrid"></div>
 
   </div>
@@ -173,8 +140,7 @@
 </div>
 
 
-<!-- ===== エリア移動 ===== -->
-
+<!-- マップ移動 -->
 <div id="travelOverlay" class="hidden">
 
   <div class="travel-box">
