@@ -1,16 +1,12 @@
-const canvas =
-  document.getElementById("gameCanvas");
-
-const ctx =
-  canvas.getContext("2d");
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
 
-/* ==============================
+/* =========================================================
    GAME STATE
-================================ */
+========================================================= */
 
-let currentArea =
-  "street";
+let currentArea = "street";
 
 let collectedWords =
   JSON.parse(
@@ -19,22 +15,17 @@ let collectedWords =
 
 let keys = {};
 
-let dialogueOpen =
-  false;
+let dialogueOpen = false;
+let libraryOpen = false;
+let cardOpen = false;
+let travelling = false;
 
-let libraryOpen =
-  false;
-
-let cardOpen =
-  false;
-
-let currentTarget =
-  null;
+let currentTarget = null;
 
 
-/* ==============================
+/* =========================================================
    PLAYER
-================================ */
+========================================================= */
 
 const player = {
 
@@ -44,27 +35,26 @@ const player = {
   width: 24,
   height: 36,
 
-  speed: 3.2,
+  speed: 3.1,
 
   direction: "down",
 
   walking: false,
-
   step: 0
 
 };
 
 
-/* ==============================
-   MAP OBJECTS
-================================ */
+/* =========================================================
+   OBJECTS
+========================================================= */
 
 let objects = [];
 
 
-/* ==============================
+/* =========================================================
    HELPERS
-================================ */
+========================================================= */
 
 function rectCollision(a, b) {
 
@@ -80,17 +70,11 @@ function rectCollision(a, b) {
 
 function distance(a, b) {
 
-  const ax =
-    a.x + a.width / 2;
+  const ax = a.x + a.width / 2;
+  const ay = a.y + a.height / 2;
 
-  const ay =
-    a.y + a.height / 2;
-
-  const bx =
-    b.x + b.width / 2;
-
-  const by =
-    b.y + b.height / 2;
+  const bx = b.x + b.width / 2;
+  const by = b.y + b.height / 2;
 
   return Math.hypot(
     ax - bx,
@@ -100,59 +84,30 @@ function distance(a, b) {
 }
 
 
-/* ==============================
-   MAP LOAD
-================================ */
+function roundedRect(
+  x,
+  y,
+  width,
+  height,
+  radius
+){
 
-function loadArea(area, spawn = null) {
+  ctx.beginPath();
 
-  currentArea =
-    area;
-
-  document.getElementById(
-    "areaName"
-  ).textContent =
-    AREAS[area].name;
-
-
-  objects = [];
-
-
-  if(area === "street")
-    buildStreet();
-
-  if(area === "castle")
-    buildCastle();
-
-  if(area === "library")
-    buildLibrary();
-
-  if(area === "origami")
-    buildOrigami();
-
-  if(area === "shrine")
-    buildShrine();
-
-
-  if(spawn) {
-
-    player.x =
-      spawn.x;
-
-    player.y =
-      spawn.y;
-
-  }
-
-
-  showAreaSplash();
+  ctx.roundRect(
+    x,
+    y,
+    width,
+    height,
+    radius
+  );
 
 }
 
 
-/* ==============================
+/* =========================================================
    OBJECT FACTORIES
-================================ */
+========================================================= */
 
 function addNPC(
   x,
@@ -225,8 +180,10 @@ function addObject(
   objects.push({
 
     type,
+
     x,
     y,
+
     width,
     height,
 
@@ -250,9 +207,58 @@ function addObject(
 }
 
 
-/* ==============================
+/* =========================================================
+   LOAD AREA
+========================================================= */
+
+function loadArea(
+  area,
+  spawn = null
+){
+
+  currentArea = area;
+
+  document.getElementById(
+    "areaName"
+  ).textContent =
+    AREAS[area].name;
+
+
+  objects = [];
+
+
+  if(area === "street")
+    buildStreet();
+
+  else if(area === "castle")
+    buildCastle();
+
+  else if(area === "library")
+    buildLibrary();
+
+  else if(area === "origami")
+    buildOrigami();
+
+  else if(area === "shrine")
+    buildShrine();
+
+
+  if(spawn){
+
+    player.x = spawn.x;
+    player.y = spawn.y;
+
+  }
+
+
+  showAreaSplash();
+
+}
+
+
+/* =========================================================
    STREET
-================================ */
+========================================================= */
 
 function buildStreet(){
 
@@ -265,10 +271,7 @@ function buildStreet(){
   addObject(
     "shop",
     350,75,
-    220,140,
-    {
-      label:"商店"
-    }
+    220,140
   );
 
   addObject(
@@ -283,8 +286,12 @@ function buildStreet(){
     600,180,
     35,55,
     {
-      jp:"これは自動販売機です。",
-      cn:"这是自动售货机。",
+      jp:
+        "これは自動販売機です。",
+
+      cn:
+        "这是自动售货机。",
+
       word:4
     }
   );
@@ -318,6 +325,8 @@ function buildStreet(){
   );
 
 
+  /* 城址公園 */
+
   addTravel(
     1180,
     250,
@@ -327,11 +336,13 @@ function buildStreet(){
     "castle",
 
     {
-      x:80,
-      y:400
+      x:628,
+      y:630
     }
   );
 
+
+  /* ORIGAMI */
 
   addTravel(
     20,
@@ -350,90 +361,430 @@ function buildStreet(){
 }
 
 
-/* ==============================
-   CASTLE
-================================ */
+/* =========================================================
+   CASTLE PARK
+========================================================= */
 
 function buildCastle(){
 
+  /*
+     添付マップをゲーム用にデフォルメ。
+
+              北
+
+         ┌────── 堀 ──────┐
+       ／                     ＼
+      │ 勝姫稲荷       四阿     │
+ 湧水 │                       │
+      │       芝生広場          │
+      │                       │
+      │ 銀明水         野外舞台 │
+       ＼                     ／
+         └──── 橋 ──────┘
+                │
+              入口
+                │
+              駐車場
+
+              南
+  */
+
+
+  /* --------------------------------
+     芝生広場
+  -------------------------------- */
+
   addObject(
-    "water",
-    180,110,
-    900,90,
+    "lawnInteract",
+
+    470,220,
+    340,260,
+
     {
-      solid:true
+      solid:false,
+
+      jp:
+        "広い芝生広場です。町の人たちが遊んだり、のんびり過ごしたりしています。",
+
+      cn:
+        "这里是一片宽阔的草坪。当地居民会在这里玩耍、休息。",
+
+      word:31
+    }
+  );
+
+
+  /* --------------------------------
+     勝姫稲荷神社
+  -------------------------------- */
+
+  addObject(
+    "inari",
+
+    270,150,
+    75,75,
+
+    {
+      solid:true,
+
+      jp:
+        "公園の中に小さな稲荷神社があります。",
+
+      cn:
+        "公园里有一座小小的稻荷神社。",
+
+      word:32
+    }
+  );
+
+
+  /* --------------------------------
+     湧水
+  -------------------------------- */
+
+  addObject(
+    "spring",
+
+    190,220,
+    65,60,
+
+    {
+      solid:true,
+
+      jp:
+        "きれいな水が湧き出しています。",
+
+      cn:
+        "清澈的水从地下涌出。",
+
+      word:33
+    }
+  );
+
+
+  /* --------------------------------
+     銀明水
+  -------------------------------- */
+
+  addObject(
+    "ginmeisui",
+
+    320,500,
+    75,60,
+
+    {
+      solid:true,
+
+      jp:
+        "上三川七水のひとつ、「銀明水」です。",
+
+      cn:
+        "这是“上三川七水”之一的“银明水”。",
+
+      word:34
+    }
+  );
+
+
+  /* --------------------------------
+     四阿
+  -------------------------------- */
+
+  addObject(
+    "azumaya",
+
+    875,160,
+    75,65,
+
+    {
+      solid:true,
+
+      jp:
+        "公園の四阿です。木陰で休むことができます。",
+
+      cn:
+        "这是公园里的凉亭，可以在树荫下休息。",
+
+      word:35
     }
   );
 
 
   addObject(
-    "bridge",
-    580,105,
-    120,110,
+    "azumaya",
+
+    280,545,
+    70,60,
+
     {
-      solid:false
+      solid:true,
+
+      jp:
+        "木々に囲まれた四阿です。",
+
+      cn:
+        "这是一座被树木环绕的凉亭。",
+
+      word:35
     }
   );
 
 
   addObject(
-    "stone",
-    350,280,
-    580,70
+    "azumaya",
+
+    440,525,
+    70,60,
+
+    {
+      solid:true,
+
+      jp:
+        "散歩の途中で少し休憩できます。",
+
+      cn:
+        "散步途中可以在这里稍作休息。",
+
+      word:35
+    }
   );
 
+
+  /* --------------------------------
+     野外ステージ
+  -------------------------------- */
+
+  addObject(
+    "stage",
+
+    930,420,
+    120,90,
+
+    {
+      solid:true,
+
+      jp:
+        "ここは野外ステージです。",
+
+      cn:
+        "这里是露天舞台。",
+
+      word:36
+    }
+  );
+
+
+  /* --------------------------------
+     電源BOX
+  -------------------------------- */
+
+  addObject(
+    "powerBox",
+
+    675,530,
+    35,35,
+
+    {
+      solid:true,
+
+      jp:
+        "イベントなどで使われる電源ボックスです。",
+
+      cn:
+        "这是举办活动时使用的电源箱。"
+    }
+  );
+
+
+  /* --------------------------------
+     案内板
+  -------------------------------- */
+
+  addObject(
+    "parkSign",
+
+    585,600,
+    55,45,
+
+    {
+      solid:true,
+
+      jp:
+        "上三川城址公園の案内板です。",
+
+      cn:
+        "这是上三川城址公园的导览牌。",
+
+      word:37
+    }
+  );
+
+
+  /* --------------------------------
+     木
+  -------------------------------- */
+
+  const castleTrees = [
+
+    /* 北側 */
+
+    [220,105],
+    [270,95],
+    [320,110],
+    [370,85],
+    [420,95],
+    [475,82],
+    [530,95],
+    [590,82],
+    [650,90],
+    [710,80],
+    [770,92],
+    [830,85],
+    [890,100],
+    [950,105],
+    [1000,125],
+
+    /* 西側 */
+
+    [180,305],
+    [190,355],
+    [175,410],
+    [195,460],
+    [200,520],
+
+    /* 東側 */
+
+    [1040,245],
+    [1055,300],
+    [1040,355],
+    [1060,540],
+
+    /* 南側 */
+
+    [220,555],
+    [375,570],
+    [525,585],
+    [755,580],
+    [830,565],
+    [995,545]
+
+  ];
+
+
+  castleTrees.forEach(
+    ([x,y],index) => {
+
+      addObject(
+        "parkTree",
+
+        x,
+        y,
+
+        34 + (index % 3) * 4,
+        46 + (index % 2) * 6,
+
+        {
+          solid:true
+        }
+      );
+
+    }
+  );
+
+
+  /* --------------------------------
+     NPC
+  -------------------------------- */
 
   addNPC(
-    720,
-    430,
+    705,
+    320,
 
     "歴史に詳しいおじいさん",
 
-    "ここには昔、上三川城という城があったんだよ。",
+    "ここには昔、上三川城という城があったんだよ。今は町の公園になっているんだ。",
 
-    "这里以前有一座叫上三川城的城。",
+    "这里过去有一座名叫上三川城的城。现在这里已经成为镇上的公园。",
 
     6
   );
 
 
-  addObject(
-    "sign",
-    450,430,
-    35,40,
-    {
-      jp:"城の周りには堀がありました。",
-      cn:"城的周围曾经有护城河。",
-      word:7
-    }
+  addNPC(
+    535,
+    370,
+
+    "子ども",
+
+    "この芝生、広いでしょ！よくここで遊ぶんだ。",
+
+    "这片草坪很大吧！我经常在这里玩。",
+
+    31
   );
 
 
+  addNPC(
+    810,
+    535,
+
+    "散歩中の人",
+
+    "この散策路を一周すると、いい散歩になりますよ。",
+
+    "沿着这条散步道走一圈，很适合散步。",
+
+    38
+  );
+
+
+  addNPC(
+    345,
+    230,
+
+    "散歩中のおばあさん",
+
+    "あそこにあるのは勝姫稲荷神社ですよ。",
+
+    "那边的是胜姬稻荷神社。",
+
+    32
+  );
+
+
+  /* --------------------------------
+     南側入口 → 上三川通り
+  -------------------------------- */
+
   addTravel(
-    20,
-    260,
-    60,
-    220,
+    580,
+    675,
+    150,
+    45,
 
     "street",
 
     {
-      x:1120,
+      x:1110,
       y:400
     }
   );
 
 
+  /* --------------------------------
+     東側 → 図書館
+  -------------------------------- */
+
   addTravel(
     1180,
-    260,
-    60,
-    220,
+    280,
+    80,
+    170,
 
     "library",
 
     {
-      x:80,
+      x:100,
       y:400
     }
   );
@@ -441,9 +792,9 @@ function buildCastle(){
 }
 
 
-/* ==============================
+/* =========================================================
    LIBRARY
-================================ */
+========================================================= */
 
 function buildLibrary(){
 
@@ -488,11 +839,17 @@ function buildLibrary(){
 
   addObject(
     "origamiDisplay",
+
     950,360,
     100,100,
+
     {
-      jp:"折り紙の作品が展示されています。",
-      cn:"这里展示着折纸作品。",
+      jp:
+        "折り紙の作品が展示されています。",
+
+      cn:
+        "这里展示着折纸作品。",
+
       word:16
     }
   );
@@ -508,16 +865,16 @@ function buildLibrary(){
 
     {
       x:1120,
-      y:400
+      y:370
     }
   );
 
 }
 
 
-/* ==============================
+/* =========================================================
    ORIGAMI PLAZA
-================================ */
+========================================================= */
 
 function buildOrigami(){
 
@@ -587,26 +944,32 @@ function buildOrigami(){
 
     {
       x:620,
-      y:100
+      y:110
     }
   );
 
 }
 
 
-/* ==============================
+/* =========================================================
    SHRINE
-================================ */
+========================================================= */
 
 function buildShrine(){
 
   addObject(
     "torii",
+
     540,80,
     200,70,
+
     {
-      jp:"大きな鳥居があります。",
-      cn:"这里有一座巨大的鸟居。",
+      jp:
+        "大きな鳥居があります。",
+
+      cn:
+        "这里有一座巨大的鸟居。",
+
       word:22
     }
   );
@@ -614,6 +977,7 @@ function buildShrine(){
 
   addObject(
     "shrineBuilding",
+
     440,180,
     400,170
   );
@@ -635,11 +999,17 @@ function buildShrine(){
 
   addObject(
     "omikuji",
+
     300,420,
     80,60,
+
     {
-      jp:"おみくじを引いてみますか？",
-      cn:"要不要抽一张神签？",
+      jp:
+        "おみくじを引いてみますか？",
+
+      cn:
+        "要不要抽一张神签？",
+
       word:24
     }
   );
@@ -662,21 +1032,23 @@ function buildShrine(){
 }
 
 
-/* ==============================
+/* =========================================================
    INPUT
-================================ */
+========================================================= */
 
 window.addEventListener(
   "keydown",
   e => {
 
-    keys[
-      e.key.toLowerCase()
-    ] = true;
+    const key =
+      e.key.toLowerCase();
+
+
+    keys[key] = true;
 
 
     if(
-      e.key.toLowerCase() === "e" ||
+      key === "e" ||
       e.key === "Enter"
     ){
 
@@ -685,9 +1057,7 @@ window.addEventListener(
     }
 
 
-    if(
-      e.key.toLowerCase() === "l"
-    ){
+    if(key === "l"){
 
       toggleLibrary();
 
@@ -709,16 +1079,17 @@ window.addEventListener(
 );
 
 
-/* ==============================
-   MOVEMENT
-================================ */
+/* =========================================================
+   PLAYER MOVEMENT
+========================================================= */
 
 function updatePlayer(){
 
   if(
     dialogueOpen ||
     libraryOpen ||
-    cardOpen
+    cardOpen ||
+    travelling
   )
     return;
 
@@ -759,13 +1130,26 @@ function updatePlayer(){
   }
 
 
+  /* 斜め移動補正 */
+
+  if(dx !== 0 && dy !== 0){
+
+    dx *= .707;
+    dy *= .707;
+
+  }
+
+
   player.walking =
     dx !== 0 ||
     dy !== 0;
 
 
-  if(player.walking)
-    player.step += .15;
+  if(player.walking){
+
+    player.step += .17;
+
+  }
 
 
   const nextX = {
@@ -803,8 +1187,11 @@ function updatePlayer(){
         nextX,
         obj
       )
-    )
+    ){
+
       blockedX = true;
+
+    }
 
 
     if(
@@ -812,14 +1199,18 @@ function updatePlayer(){
         nextY,
         obj
       )
-    )
+    ){
+
       blockedY = true;
+
+    }
 
   });
 
 
   if(!blockedX)
     player.x += dx;
+
 
   if(!blockedY)
     player.y += dy;
@@ -850,13 +1241,17 @@ function updatePlayer(){
 }
 
 
-/* ==============================
+/* =========================================================
    TRAVEL
-================================ */
+========================================================= */
 
 function checkTravel(){
 
-  objects.forEach(obj => {
+  if(travelling)
+    return;
+
+
+  for(const obj of objects){
 
     if(
       obj.type === "travel" &&
@@ -871,9 +1266,11 @@ function checkTravel(){
         obj.spawn
       );
 
+      break;
+
     }
 
-  });
+  }
 
 }
 
@@ -882,6 +1279,9 @@ function travelTo(
   destination,
   spawn
 ){
+
+  travelling = true;
+
 
   const overlay =
     document.getElementById(
@@ -892,9 +1292,7 @@ function travelTo(
   document.getElementById(
     "travelDestination"
   ).textContent =
-    AREAS[
-      destination
-    ].name;
+    AREAS[destination].name;
 
 
   overlay.classList.remove(
@@ -914,21 +1312,26 @@ function travelTo(
       "hidden"
     );
 
+
+    setTimeout(() => {
+
+      travelling = false;
+
+    },200);
+
   },600);
 
 }
 
 
-/* ==============================
+/* =========================================================
    INTERACTION
-================================ */
+========================================================= */
 
 function findTarget(){
 
   let closest = null;
-
-  let closestDistance =
-    Infinity;
+  let closestDistance = Infinity;
 
 
   objects.forEach(obj => {
@@ -948,15 +1351,12 @@ function findTarget(){
 
 
     if(
-      d < 85 &&
+      d < 88 &&
       d < closestDistance
     ){
 
-      closest =
-        obj;
-
-      closestDistance =
-        d;
+      closest = obj;
+      closestDistance = d;
 
     }
 
@@ -970,7 +1370,11 @@ function findTarget(){
 
 function interact(){
 
-  if(cardOpen)
+  if(
+    cardOpen ||
+    libraryOpen ||
+    travelling
+  )
     return;
 
 
@@ -990,11 +1394,8 @@ function interact(){
     return;
 
 
-  currentTarget =
-    target;
-
-
   openDialogue(
+
     target.name ||
     "調べる",
 
@@ -1003,14 +1404,15 @@ function interact(){
     target.cn,
 
     target.word
+
   );
 
 }
 
 
-/* ==============================
+/* =========================================================
    DIALOGUE
-================================ */
+========================================================= */
 
 function openDialogue(
   speaker,
@@ -1019,8 +1421,7 @@ function openDialogue(
   word
 ){
 
-  dialogueOpen =
-    true;
+  dialogueOpen = true;
 
 
   document.getElementById(
@@ -1032,13 +1433,13 @@ function openDialogue(
   document.getElementById(
     "dialogueJapanese"
   ).textContent =
-    jp;
+    jp || "";
 
 
   document.getElementById(
     "dialogueChinese"
   ).textContent =
-    cn;
+    cn || "";
 
 
   document.getElementById(
@@ -1064,8 +1465,7 @@ function closeDialogue(){
   );
 
 
-  dialogueOpen =
-    false;
+  dialogueOpen = false;
 
 
   if(
@@ -1080,15 +1480,14 @@ function closeDialogue(){
   }
 
 
-  currentTarget =
-    null;
+  currentTarget = null;
 
 }
 
 
-/* ==============================
+/* =========================================================
    WORD COLLECTION
-================================ */
+========================================================= */
 
 function collectWord(id){
 
@@ -1118,16 +1517,18 @@ function collectWord(id){
     );
 
 
-  if(word)
+  if(word){
+
     showWordCard(word);
+
+  }
 
 }
 
 
 function showWordCard(word){
 
-  cardOpen =
-    true;
+  cardOpen = true;
 
 
   document.getElementById(
@@ -1163,9 +1564,9 @@ function showWordCard(word){
 }
 
 
-/* ==============================
+/* =========================================================
    LIBRARY
-================================ */
+========================================================= */
 
 function renderLibrary(){
 
@@ -1178,7 +1579,11 @@ function renderLibrary(){
   grid.innerHTML = "";
 
 
-  for(let i = 1; i <= 100; i++){
+  for(
+    let i = 1;
+    i <= 100;
+    i++
+  ){
 
     const word =
       WORDS.find(
@@ -1200,10 +1605,13 @@ function renderLibrary(){
       "word-item";
 
 
-    if(!unlocked)
+    if(!unlocked){
+
       item.classList.add(
         "word-locked"
       );
+
+    }
 
 
     if(
@@ -1232,6 +1640,7 @@ function renderLibrary(){
       `;
 
     }
+
     else {
 
       item.innerHTML = `
@@ -1253,9 +1662,7 @@ function renderLibrary(){
     }
 
 
-    grid.appendChild(
-      item
-    );
+    grid.appendChild(item);
 
   }
 
@@ -1269,12 +1676,16 @@ function renderLibrary(){
   document.getElementById(
     "progressFill"
   ).style.width =
-    `${collectedWords.length}%`;
+    `${Math.min(collectedWords.length,100)}%`;
 
 }
 
 
 function toggleLibrary(){
+
+  if(cardOpen)
+    return;
+
 
   libraryOpen =
     !libraryOpen;
@@ -1291,6 +1702,7 @@ function toggleLibrary(){
     );
 
   }
+
   else {
 
     document.getElementById(
@@ -1304,9 +1716,9 @@ function toggleLibrary(){
 }
 
 
-/* ==============================
-   DRAW
-================================ */
+/* =========================================================
+   DRAW MAIN
+========================================================= */
 
 function draw(){
 
@@ -1320,39 +1732,115 @@ function draw(){
 
   drawGround();
 
-  drawRoads();
+
+  if(currentArea === "castle"){
+
+    drawCastleLandscape();
+
+  }
+
+  else {
+
+    drawRoads();
+
+  }
 
 
-  objects.forEach(
-    drawObject
+  /*
+     y座標順に描画。
+     キャラクターが建物の前後を歩いている感じを出す。
+  */
+
+  const drawableObjects =
+    objects
+      .filter(
+        obj =>
+          obj.type !== "travel" &&
+          obj.type !== "lawnInteract"
+      )
+      .sort(
+        (a,b) =>
+          (a.y + a.height) -
+          (b.y + b.height)
+      );
+
+
+  let playerDrawn = false;
+
+
+  drawableObjects.forEach(
+    obj => {
+
+      if(
+        !playerDrawn &&
+        player.y + player.height <
+        obj.y + obj.height
+      ){
+
+        drawPlayer();
+
+        playerDrawn = true;
+
+      }
+
+
+      drawObject(obj);
+
+    }
   );
 
 
-  drawPlayer();
+  if(!playerDrawn){
+
+    drawPlayer();
+
+  }
+
+
+  if(currentArea === "castle"){
+
+    drawCastleForeground();
+
+  }
 
 }
 
 
-/* ==============================
+/* =========================================================
    GROUND
-================================ */
+========================================================= */
 
 function drawGround(){
 
-  if(currentArea === "street")
-    ctx.fillStyle = "#9eb985";
+  if(currentArea === "street"){
 
-  else if(currentArea === "castle")
-    ctx.fillStyle = "#8eae79";
+    ctx.fillStyle = "#91ae72";
 
-  else if(currentArea === "library")
+  }
+
+  else if(currentArea === "castle"){
+
+    ctx.fillStyle = "#538f2f";
+
+  }
+
+  else if(currentArea === "library"){
+
     ctx.fillStyle = "#d7cbb6";
 
-  else if(currentArea === "origami")
+  }
+
+  else if(currentArea === "origami"){
+
     ctx.fillStyle = "#d9d4c4";
 
-  else
-    ctx.fillStyle = "#98ae83";
+  }
+
+  else {
+
+    ctx.fillStyle = "#8ca374";
+
+  }
 
 
   ctx.fillRect(
@@ -1365,16 +1853,17 @@ function drawGround(){
 }
 
 
-/* ==============================
-   ROADS
-================================ */
+/* =========================================================
+   NORMAL ROADS
+========================================================= */
 
 function drawRoads(){
 
   if(currentArea === "street"){
 
-    ctx.fillStyle =
-      "#747875";
+    /* 道路 */
+
+    ctx.fillStyle = "#747875";
 
     ctx.fillRect(
       0,
@@ -1384,14 +1873,15 @@ function drawRoads(){
     );
 
 
-    ctx.fillStyle =
-      "#d9d9d3";
+    /* センターライン */
+
+    ctx.fillStyle = "#e9e6d5";
 
 
     for(
-      let x=30;
-      x<1280;
-      x+=100
+      let x = 30;
+      x < 1280;
+      x += 100
     ){
 
       ctx.fillRect(
@@ -1404,10 +1894,9 @@ function drawRoads(){
     }
 
 
-    /* sidewalks */
+    /* 歩道 */
 
-    ctx.fillStyle =
-      "#c7c5ba";
+    ctx.fillStyle = "#c7c5ba";
 
     ctx.fillRect(
       0,
@@ -1428,8 +1917,7 @@ function drawRoads(){
 
   if(currentArea === "shrine"){
 
-    ctx.fillStyle =
-      "#b7aa8e";
+    ctx.fillStyle = "#b7aa8e";
 
     ctx.fillRect(
       575,
@@ -1443,18 +1931,522 @@ function drawRoads(){
 }
 
 
-/* ==============================
+/* =========================================================
+   CASTLE LANDSCAPE
+========================================================= */
+
+function drawCastleLandscape(){
+
+  /*
+     まず外側の土・道路
+  */
+
+  ctx.fillStyle = "#c6b892";
+
+  ctx.fillRect(
+    0,
+    0,
+    1280,
+    720
+  );
+
+
+  /*
+     公園外側の緑
+  */
+
+  ctx.fillStyle = "#4c9d2d";
+
+  ctx.beginPath();
+
+  ctx.moveTo(150,70);
+  ctx.lineTo(260,25);
+  ctx.lineTo(440,35);
+  ctx.lineTo(520,15);
+  ctx.lineTo(760,25);
+  ctx.lineTo(1020,65);
+  ctx.lineTo(1120,135);
+  ctx.lineTo(1145,540);
+  ctx.lineTo(1040,625);
+  ctx.lineTo(790,660);
+  ctx.lineTo(720,630);
+  ctx.lineTo(550,650);
+  ctx.lineTo(430,630);
+  ctx.lineTo(210,615);
+  ctx.lineTo(140,520);
+  ctx.lineTo(125,250);
+
+  ctx.closePath();
+  ctx.fill();
+
+
+  /*
+     外周の堀
+  */
+
+  ctx.fillStyle = "#518ea1";
+
+  ctx.beginPath();
+
+  ctx.moveTo(185,90);
+  ctx.lineTo(275,55);
+  ctx.lineTo(430,65);
+  ctx.lineTo(515,40);
+  ctx.lineTo(750,48);
+  ctx.lineTo(990,85);
+  ctx.lineTo(1080,145);
+  ctx.lineTo(1100,515);
+  ctx.lineTo(1010,585);
+  ctx.lineTo(795,620);
+  ctx.lineTo(705,595);
+  ctx.lineTo(560,615);
+  ctx.lineTo(440,590);
+  ctx.lineTo(245,580);
+  ctx.lineTo(180,510);
+  ctx.lineTo(160,250);
+
+  ctx.closePath();
+  ctx.fill();
+
+
+  /*
+     水面のハイライト
+  */
+
+  ctx.strokeStyle =
+    "rgba(215,242,245,.35)";
+
+  ctx.lineWidth = 3;
+
+  ctx.beginPath();
+
+  ctx.moveTo(205,105);
+  ctx.lineTo(285,75);
+  ctx.lineTo(430,82);
+  ctx.lineTo(520,58);
+  ctx.lineTo(745,65);
+  ctx.lineTo(975,100);
+
+  ctx.stroke();
+
+
+  /*
+     堀の内側の城域
+  */
+
+  ctx.fillStyle = "#64a936";
+
+  ctx.beginPath();
+
+  ctx.moveTo(215,115);
+  ctx.lineTo(295,85);
+  ctx.lineTo(435,92);
+  ctx.lineTo(530,68);
+  ctx.lineTo(740,75);
+  ctx.lineTo(955,110);
+  ctx.lineTo(1035,165);
+  ctx.lineTo(1050,485);
+  ctx.lineTo(975,550);
+  ctx.lineTo(790,585);
+  ctx.lineTo(700,560);
+  ctx.lineTo(560,580);
+  ctx.lineTo(450,555);
+  ctx.lineTo(275,550);
+  ctx.lineTo(215,490);
+  ctx.lineTo(195,260);
+
+  ctx.closePath();
+  ctx.fill();
+
+
+  /*
+     中央芝生
+  */
+
+  const lawnGradient =
+    ctx.createLinearGradient(
+      400,
+      180,
+      800,
+      500
+    );
+
+
+  lawnGradient.addColorStop(
+    0,
+    "#a9d94a"
+  );
+
+  lawnGradient.addColorStop(
+    1,
+    "#96cc3d"
+  );
+
+
+  ctx.fillStyle =
+    lawnGradient;
+
+
+  ctx.beginPath();
+
+  ctx.moveTo(455,190);
+  ctx.quadraticCurveTo(
+    620,155,
+    825,205
+  );
+
+  ctx.quadraticCurveTo(
+    860,330,
+    815,465
+  );
+
+  ctx.quadraticCurveTo(
+    630,505,
+    430,460
+  );
+
+  ctx.quadraticCurveTo(
+    405,330,
+    455,190
+  );
+
+  ctx.closePath();
+  ctx.fill();
+
+
+  /*
+     芝模様
+  */
+
+  ctx.fillStyle =
+    "rgba(65,130,38,.17)";
+
+
+  for(let i=0;i<90;i++){
+
+    const x =
+      445 + ((i * 73) % 380);
+
+    const y =
+      195 + ((i * 47) % 270);
+
+
+    ctx.fillRect(
+      x,
+      y,
+      3,
+      7
+    );
+
+  }
+
+
+  /*
+     散策路
+  */
+
+  ctx.strokeStyle = "#d9ca9e";
+  ctx.lineWidth = 24;
+
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+
+  ctx.beginPath();
+
+  ctx.moveTo(620,595);
+
+  ctx.quadraticCurveTo(
+    430,565,
+    320,500
+  );
+
+  ctx.quadraticCurveTo(
+    245,410,
+    290,285
+  );
+
+  ctx.quadraticCurveTo(
+    335,175,
+    455,145
+  );
+
+  ctx.quadraticCurveTo(
+    650,95,
+    870,155
+  );
+
+  ctx.quadraticCurveTo(
+    1000,200,
+    990,330
+  );
+
+  ctx.quadraticCurveTo(
+    980,480,
+    850,525
+  );
+
+  ctx.quadraticCurveTo(
+    730,565,
+    620,595
+  );
+
+  ctx.stroke();
+
+
+  /*
+     芝生を横切る園路
+  */
+
+  ctx.beginPath();
+
+  ctx.moveTo(350,480);
+
+  ctx.quadraticCurveTo(
+    520,450,
+    690,470
+  );
+
+  ctx.quadraticCurveTo(
+    830,480,
+    965,430
+  );
+
+  ctx.stroke();
+
+
+  /*
+     北側園路
+  */
+
+  ctx.beginPath();
+
+  ctx.moveTo(350,205);
+
+  ctx.quadraticCurveTo(
+    510,135,
+    690,145
+  );
+
+  ctx.quadraticCurveTo(
+    830,145,
+    930,220
+  );
+
+  ctx.stroke();
+
+
+  /*
+     南側入口
+  */
+
+  ctx.fillStyle = "#d5c49b";
+
+  ctx.beginPath();
+
+  ctx.moveTo(570,720);
+  ctx.lineTo(605,575);
+  ctx.lineTo(670,575);
+  ctx.lineTo(715,720);
+
+  ctx.closePath();
+  ctx.fill();
+
+
+  /*
+     正面橋
+  */
+
+  ctx.fillStyle = "#b5aa91";
+
+  ctx.fillRect(
+    595,
+    560,
+    90,
+    65
+  );
+
+
+  /*
+     橋の欄干
+  */
+
+  ctx.fillStyle = "#76634a";
+
+  ctx.fillRect(
+    592,
+    565,
+    6,
+    58
+  );
+
+  ctx.fillRect(
+    682,
+    565,
+    6,
+    58
+  );
+
+
+  /*
+     駐車場
+  */
+
+  ctx.fillStyle = "#8c8f8b";
+
+  ctx.beginPath();
+
+  ctx.moveTo(350,650);
+  ctx.lineTo(520,625);
+  ctx.lineTo(565,720);
+  ctx.lineTo(300,720);
+
+  ctx.closePath();
+  ctx.fill();
+
+
+  /*
+     駐車場白線
+  */
+
+  ctx.strokeStyle =
+    "rgba(255,255,255,.75)";
+
+  ctx.lineWidth = 2;
+
+
+  for(let x=330;x<520;x+=38){
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      x,
+      675
+    );
+
+    ctx.lineTo(
+      x+15,
+      720
+    );
+
+    ctx.stroke();
+
+  }
+
+
+  /*
+     東側出口
+  */
+
+  ctx.fillStyle = "#d5c49b";
+
+  ctx.fillRect(
+    1030,
+    320,
+    250,
+    55
+  );
+
+}
+
+
+/* =========================================================
+   CASTLE FOREGROUND
+========================================================= */
+
+function drawCastleForeground(){
+
+  /*
+     公園名
+  */
+
+  ctx.save();
+
+  ctx.font =
+    "bold 14px sans-serif";
+
+  ctx.fillStyle =
+    "rgba(255,255,255,.85)";
+
+  ctx.strokeStyle =
+    "rgba(30,55,30,.75)";
+
+  ctx.lineWidth = 4;
+
+  ctx.strokeText(
+    "上三川城址公園",
+    545,
+    125
+  );
+
+  ctx.fillText(
+    "上三川城址公園",
+    545,
+    125
+  );
+
+
+  /*
+     芝生広場ラベル
+  */
+
+  ctx.font =
+    "bold 13px sans-serif";
+
+  ctx.strokeText(
+    "芝生広場",
+    605,
+    340
+  );
+
+  ctx.fillText(
+    "芝生広場",
+    605,
+    340
+  );
+
+
+  /*
+     お堀
+  */
+
+  ctx.font =
+    "12px sans-serif";
+
+  ctx.strokeText(
+    "お堀",
+    625,
+    62
+  );
+
+  ctx.fillText(
+    "お堀",
+    625,
+    62
+  );
+
+
+  ctx.restore();
+
+}
+
+
+/* =========================================================
    OBJECT DRAW
-================================ */
+========================================================= */
 
 function drawObject(o){
 
   switch(o.type){
 
+
+    /* -------------------------
+       HOUSE
+    ------------------------- */
+
     case "house":
 
-      ctx.fillStyle =
-        "#e8e0cf";
+      ctx.fillStyle = "#e8e0cf";
 
       ctx.fillRect(
         o.x,
@@ -1464,8 +2456,7 @@ function drawObject(o){
       );
 
 
-      ctx.fillStyle =
-        "#55534f";
+      ctx.fillStyle = "#55534f";
 
       ctx.fillRect(
         o.x-10,
@@ -1477,10 +2468,13 @@ function drawObject(o){
       break;
 
 
+    /* -------------------------
+       SHOP
+    ------------------------- */
+
     case "shop":
 
-      ctx.fillStyle =
-        "#ddd0b2";
+      ctx.fillStyle = "#ddd0b2";
 
       ctx.fillRect(
         o.x,
@@ -1490,8 +2484,7 @@ function drawObject(o){
       );
 
 
-      ctx.fillStyle =
-        "#5f4637";
+      ctx.fillStyle = "#5f4637";
 
       ctx.fillRect(
         o.x,
@@ -1501,8 +2494,7 @@ function drawObject(o){
       );
 
 
-      ctx.fillStyle =
-        "#fff";
+      ctx.fillStyle = "#fff";
 
       ctx.font =
         "18px sans-serif";
@@ -1510,11 +2502,15 @@ function drawObject(o){
       ctx.fillText(
         "商 店",
         o.x+75,
-        o.y+25
+        o.y+24
       );
 
       break;
 
+
+    /* -------------------------
+       NPC
+    ------------------------- */
 
     case "npc":
 
@@ -1523,10 +2519,13 @@ function drawObject(o){
       break;
 
 
+    /* -------------------------
+       VENDING MACHINE
+    ------------------------- */
+
     case "vending":
 
-      ctx.fillStyle =
-        "#e7e7e7";
+      ctx.fillStyle = "#e8ecec";
 
       ctx.fillRect(
         o.x,
@@ -1536,8 +2535,7 @@ function drawObject(o){
       );
 
 
-      ctx.fillStyle =
-        "#75a3b5";
+      ctx.fillStyle = "#74a3b7";
 
       ctx.fillRect(
         o.x+5,
@@ -1546,15 +2544,104 @@ function drawObject(o){
         18
       );
 
+
+      ctx.fillStyle = "#555";
+
+      ctx.fillRect(
+        o.x+22,
+        o.y+34,
+        7,
+        12
+      );
+
       break;
 
 
-    case "water":
+    /* -------------------------
+       TREE
+    ------------------------- */
 
-      ctx.fillStyle =
-        "#709ca0";
+    case "parkTree":
+
+      drawTree(o);
+
+      break;
+
+
+    /* -------------------------
+       INARI
+    ------------------------- */
+
+    case "inari":
+
+      drawInari(o);
+
+      break;
+
+
+    /* -------------------------
+       SPRING
+    ------------------------- */
+
+    case "spring":
+
+      drawSpring(o);
+
+      break;
+
+
+    /* -------------------------
+       GINMEISUI
+    ------------------------- */
+
+    case "ginmeisui":
+
+      drawGinmeisui(o);
+
+      break;
+
+
+    /* -------------------------
+       AZUMAYA
+    ------------------------- */
+
+    case "azumaya":
+
+      drawAzumaya(o);
+
+      break;
+
+
+    /* -------------------------
+       STAGE
+    ------------------------- */
+
+    case "stage":
+
+      drawStage(o);
+
+      break;
+
+
+    /* -------------------------
+       POWER BOX
+    ------------------------- */
+
+    case "powerBox":
+
+      ctx.fillStyle = "#8b908a";
 
       ctx.fillRect(
+        o.x,
+        o.y,
+        o.width,
+        o.height
+      );
+
+
+      ctx.strokeStyle = "#515650";
+
+      ctx.strokeRect(
         o.x,
         o.y,
         o.width,
@@ -1564,55 +2651,24 @@ function drawObject(o){
       break;
 
 
-    case "bridge":
+    /* -------------------------
+       PARK SIGN
+    ------------------------- */
 
-      ctx.fillStyle =
-        "#b9aa8b";
+    case "parkSign":
 
-      ctx.fillRect(
-        o.x,
-        o.y,
-        o.width,
-        o.height
-      );
+      drawParkSign(o);
 
       break;
 
 
-    case "stone":
-
-      ctx.fillStyle =
-        "#77796e";
-
-      ctx.fillRect(
-        o.x,
-        o.y,
-        o.width,
-        o.height
-      );
-
-      break;
-
-
-    case "sign":
-
-      ctx.fillStyle =
-        "#765a3b";
-
-      ctx.fillRect(
-        o.x,
-        o.y,
-        o.width,
-        o.height
-      );
-
-      break;
-
+    /* -------------------------
+       BOOKSHELF
+    ------------------------- */
 
     case "bookshelf":
 
-      ctx.fillStyle =
-        "#76553c";
+      ctx.fillStyle = "#76553c";
 
       ctx.fillRect(
         o.x,
@@ -1623,13 +2679,16 @@ function drawObject(o){
 
 
       for(
-        let x=o.x+10;
-        x<o.x+o.width-10;
-        x+=15
+        let x = o.x+10;
+        x < o.x+o.width-10;
+        x += 15
       ){
 
         ctx.fillStyle =
-          "#b45d4e";
+          (x % 30 === 0)
+          ? "#54707c"
+          : "#b45d4e";
+
 
         ctx.fillRect(
           x,
@@ -1643,12 +2702,14 @@ function drawObject(o){
       break;
 
 
-    case "origamiDisplay":
+    /* -------------------------
+       ORIGAMI
+    ------------------------- */
 
+    case "origamiDisplay":
     case "display":
 
-      ctx.fillStyle =
-        "#ece9df";
+      ctx.fillStyle = "#ece9df";
 
       ctx.fillRect(
         o.x,
@@ -1662,8 +2723,7 @@ function drawObject(o){
 
     case "desk":
 
-      ctx.fillStyle =
-        "#9a795c";
+      ctx.fillStyle = "#9a795c";
 
       ctx.fillRect(
         o.x,
@@ -1675,10 +2735,13 @@ function drawObject(o){
       break;
 
 
+    /* -------------------------
+       TORII
+    ------------------------- */
+
     case "torii":
 
-      ctx.fillStyle =
-        "#a64132";
+      ctx.fillStyle = "#a64132";
 
       ctx.fillRect(
         o.x,
@@ -1704,10 +2767,13 @@ function drawObject(o){
       break;
 
 
+    /* -------------------------
+       SHRINE
+    ------------------------- */
+
     case "shrineBuilding":
 
-      ctx.fillStyle =
-        "#69473b";
+      ctx.fillStyle = "#69473b";
 
       ctx.fillRect(
         o.x,
@@ -1717,8 +2783,7 @@ function drawObject(o){
       );
 
 
-      ctx.fillStyle =
-        "#35362e";
+      ctx.fillStyle = "#35362e";
 
       ctx.fillRect(
         o.x-30,
@@ -1732,8 +2797,7 @@ function drawObject(o){
 
     case "omikuji":
 
-      ctx.fillStyle =
-        "#eee9dd";
+      ctx.fillStyle = "#eee9dd";
 
       ctx.fillRect(
         o.x,
@@ -1749,20 +2813,569 @@ function drawObject(o){
 }
 
 
-/* ==============================
-   NPC
-================================ */
+/* =========================================================
+   TREE
+========================================================= */
 
-function drawNPC(o){
+function drawTree(o){
+
+  /* shadow */
 
   ctx.fillStyle =
-    "#f1c5a5";
+    "rgba(25,60,25,.22)";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    o.x + o.width/2 + 5,
+    o.y + o.height - 2,
+    o.width/2,
+    8,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  /* trunk */
+
+  ctx.fillStyle = "#715038";
+
+  ctx.fillRect(
+    o.x + o.width/2 - 4,
+    o.y + o.height/2,
+    8,
+    o.height/2
+  );
+
+
+  /* back foliage */
+
+  ctx.fillStyle = "#2f7630";
 
   ctx.beginPath();
 
   ctx.arc(
-    o.x + 14,
-    o.y + 9,
+    o.x + o.width/2 + 7,
+    o.y + 22,
+    o.width/2.15,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  /* main foliage */
+
+  ctx.fillStyle = "#428a36";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    o.x + o.width/2 - 5,
+    o.y + 18,
+    o.width/2.05,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  /* highlight */
+
+  ctx.fillStyle =
+    "rgba(110,170,65,.7)";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    o.x + o.width/2 - 10,
+    o.y + 12,
+    o.width/5,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+}
+
+
+/* =========================================================
+   INARI SHRINE
+========================================================= */
+
+function drawInari(o){
+
+  /* stone base */
+
+  ctx.fillStyle = "#afa792";
+
+  ctx.fillRect(
+    o.x,
+    o.y+48,
+    o.width,
+    27
+  );
+
+
+  /* building */
+
+  ctx.fillStyle = "#812f23";
+
+  ctx.fillRect(
+    o.x+18,
+    o.y+26,
+    42,
+    38
+  );
+
+
+  /* roof */
+
+  ctx.fillStyle = "#392e29";
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    o.x+7,
+    o.y+31
+  );
+
+  ctx.lineTo(
+    o.x+39,
+    o.y+3
+  );
+
+  ctx.lineTo(
+    o.x+71,
+    o.y+31
+  );
+
+  ctx.closePath();
+
+  ctx.fill();
+
+
+  /* small torii */
+
+  ctx.fillStyle = "#b63c2b";
+
+  ctx.fillRect(
+    o.x-10,
+    o.y+39,
+    30,
+    5
+  );
+
+  ctx.fillRect(
+    o.x-4,
+    o.y+36,
+    4,
+    34
+  );
+
+  ctx.fillRect(
+    o.x+13,
+    o.y+36,
+    4,
+    34
+  );
+
+}
+
+
+/* =========================================================
+   SPRING
+========================================================= */
+
+function drawSpring(o){
+
+  /* stones */
+
+  ctx.fillStyle = "#787b6c";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    o.x+32,
+    o.y+35,
+    34,
+    24,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  /* water */
+
+  ctx.fillStyle = "#70bdc2";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    o.x+32,
+    o.y+34,
+    26,
+    17,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  /* shine */
+
+  ctx.fillStyle =
+    "rgba(230,255,255,.65)";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    o.x+23,
+    o.y+29,
+    8,
+    3,
+    -.3,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+}
+
+
+/* =========================================================
+   GINMEISUI
+========================================================= */
+
+function drawGinmeisui(o){
+
+  ctx.fillStyle = "#806a4a";
+
+  ctx.fillRect(
+    o.x,
+    o.y+28,
+    o.width,
+    30
+  );
+
+
+  ctx.fillStyle = "#69abb6";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    o.x+37,
+    o.y+30,
+    30,
+    15,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  ctx.fillStyle = "#ddd8c7";
+
+  ctx.font = "10px sans-serif";
+
+  ctx.fillText(
+    "銀明水",
+    o.x+20,
+    o.y+55
+  );
+
+}
+
+
+/* =========================================================
+   AZUMAYA
+========================================================= */
+
+function drawAzumaya(o){
+
+  /* shadow */
+
+  ctx.fillStyle =
+    "rgba(0,0,0,.15)";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    o.x + o.width/2,
+    o.y + o.height,
+    o.width/2,
+    8,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  /* roof */
+
+  ctx.fillStyle = "#604733";
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    o.x-7,
+    o.y+25
+  );
+
+  ctx.lineTo(
+    o.x+o.width/2,
+    o.y
+  );
+
+  ctx.lineTo(
+    o.x+o.width+7,
+    o.y+25
+  );
+
+  ctx.closePath();
+
+  ctx.fill();
+
+
+  /* columns */
+
+  ctx.fillStyle = "#73583e";
+
+  ctx.fillRect(
+    o.x+12,
+    o.y+24,
+    5,
+    38
+  );
+
+  ctx.fillRect(
+    o.x+o.width-17,
+    o.y+24,
+    5,
+    38
+  );
+
+
+  /* bench */
+
+  ctx.fillRect(
+    o.x+15,
+    o.y+45,
+    o.width-30,
+    6
+  );
+
+}
+
+
+/* =========================================================
+   STAGE
+========================================================= */
+
+function drawStage(o){
+
+  /* shadow */
+
+  ctx.fillStyle =
+    "rgba(0,0,0,.15)";
+
+  ctx.fillRect(
+    o.x+8,
+    o.y+70,
+    o.width,
+    18
+  );
+
+
+  /* back */
+
+  ctx.fillStyle = "#776552";
+
+  ctx.fillRect(
+    o.x,
+    o.y+30,
+    o.width,
+    o.height-30
+  );
+
+
+  /* roof */
+
+  ctx.fillStyle = "#4b473e";
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    o.x-10,
+    o.y+35
+  );
+
+  ctx.lineTo(
+    o.x+o.width/2,
+    o.y
+  );
+
+  ctx.lineTo(
+    o.x+o.width+10,
+    o.y+35
+  );
+
+  ctx.closePath();
+
+  ctx.fill();
+
+
+  /* stage */
+
+  ctx.fillStyle = "#b4976d";
+
+  ctx.fillRect(
+    o.x+12,
+    o.y+55,
+    o.width-24,
+    22
+  );
+
+}
+
+
+/* =========================================================
+   PARK SIGN
+========================================================= */
+
+function drawParkSign(o){
+
+  ctx.fillStyle = "#684d32";
+
+  ctx.fillRect(
+    o.x,
+    o.y+8,
+    o.width,
+    30
+  );
+
+
+  ctx.fillRect(
+    o.x+8,
+    o.y+35,
+    5,
+    15
+  );
+
+
+  ctx.fillRect(
+    o.x+o.width-13,
+    o.y+35,
+    5,
+    15
+  );
+
+
+  ctx.fillStyle = "#eee6c7";
+
+  ctx.fillRect(
+    o.x+5,
+    o.y+13,
+    o.width-10,
+    20
+  );
+
+
+  ctx.fillStyle = "#465545";
+
+  ctx.font = "7px sans-serif";
+
+  ctx.fillText(
+    "城址公園",
+    o.x+9,
+    o.y+26
+  );
+
+}
+
+
+/* =========================================================
+   NPC
+========================================================= */
+
+function drawNPC(o){
+
+  /* shadow */
+
+  ctx.fillStyle =
+    "rgba(0,0,0,.18)";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    o.x+14,
+    o.y+38,
+    13,
+    5,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  /* legs */
+
+  ctx.fillStyle = "#454a48";
+
+  ctx.fillRect(
+    o.x+7,
+    o.y+29,
+    5,
+    9
+  );
+
+  ctx.fillRect(
+    o.x+17,
+    o.y+29,
+    5,
+    9
+  );
+
+
+  /* body */
+
+  ctx.fillStyle = "#536e78";
+
+  ctx.fillRect(
+    o.x+5,
+    o.y+16,
+    18,
+    17
+  );
+
+
+  /* head */
+
+  ctx.fillStyle = "#efc19f";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    o.x+14,
+    o.y+9,
     8,
     0,
     Math.PI*2
@@ -1771,35 +3384,41 @@ function drawNPC(o){
   ctx.fill();
 
 
-  ctx.fillStyle =
-    "#4f6773";
+  /* hair */
 
-  ctx.fillRect(
-    o.x+5,
-    o.y+17,
-    18,
-    21
+  ctx.fillStyle = "#39312e";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    o.x+14,
+    o.y+6,
+    8,
+    Math.PI,
+    Math.PI*2
   );
+
+  ctx.fill();
 
 }
 
 
-/* ==============================
-   PLAYER DRAW
-================================ */
+/* =========================================================
+   PLAYER
+========================================================= */
 
 function drawPlayer(){
 
   const bounce =
     player.walking
-      ? Math.sin(player.step)*2
+      ? Math.sin(player.step) * 2
       : 0;
 
 
   /* shadow */
 
   ctx.fillStyle =
-    "rgba(0,0,0,.2)";
+    "rgba(0,0,0,.22)";
 
   ctx.beginPath();
 
@@ -1816,23 +3435,40 @@ function drawPlayer(){
   ctx.fill();
 
 
+  /* legs */
+
+  ctx.fillStyle = "#313a42";
+
+  ctx.fillRect(
+    player.x+5,
+    player.y+27+bounce,
+    5,
+    9
+  );
+
+  ctx.fillRect(
+    player.x+15,
+    player.y+27-bounce,
+    5,
+    9
+  );
+
+
   /* body */
 
-  ctx.fillStyle =
-    "#334c63";
+  ctx.fillStyle = "#334c63";
 
   ctx.fillRect(
     player.x+4,
     player.y+14+bounce,
     16,
-    20
+    17
   );
 
 
   /* head */
 
-  ctx.fillStyle =
-    "#efc19f";
+  ctx.fillStyle = "#efc19f";
 
   ctx.beginPath();
 
@@ -1849,22 +3485,26 @@ function drawPlayer(){
 
   /* hair */
 
-  ctx.fillStyle =
-    "#292724";
+  ctx.fillStyle = "#292724";
 
-  ctx.fillRect(
-    player.x+5,
-    player.y+2+bounce,
-    14,
-    5
+  ctx.beginPath();
+
+  ctx.arc(
+    player.x+12,
+    player.y+6+bounce,
+    8,
+    Math.PI,
+    Math.PI*2
   );
+
+  ctx.fill();
 
 }
 
 
-/* ==============================
-   INTERACTION PROMPT
-================================ */
+/* =========================================================
+   PROMPT
+========================================================= */
 
 function updatePrompt(){
 
@@ -1882,7 +3522,8 @@ function updatePrompt(){
     target &&
     !dialogueOpen &&
     !cardOpen &&
-    !libraryOpen
+    !libraryOpen &&
+    !travelling
   ){
 
     prompt.classList.remove(
@@ -1890,6 +3531,7 @@ function updatePrompt(){
     );
 
   }
+
   else {
 
     prompt.classList.add(
@@ -1901,9 +3543,9 @@ function updatePrompt(){
 }
 
 
-/* ==============================
+/* =========================================================
    AREA SPLASH
-================================ */
+========================================================= */
 
 function showAreaSplash(){
 
@@ -1941,9 +3583,9 @@ function showAreaSplash(){
 }
 
 
-/* ==============================
+/* =========================================================
    HUD
-================================ */
+========================================================= */
 
 function updateHUD(){
 
@@ -1955,9 +3597,9 @@ function updateHUD(){
 }
 
 
-/* ==============================
+/* =========================================================
    BUTTONS
-================================ */
+========================================================= */
 
 document.getElementById(
   "libraryButton"
@@ -1981,15 +3623,15 @@ document.getElementById(
     "hidden"
   );
 
-  cardOpen =
-    false;
+
+  cardOpen = false;
 
 };
 
 
-/* ==============================
-   GAME LOOP
-================================ */
+/* =========================================================
+   LOOP
+========================================================= */
 
 function gameLoop(){
 
@@ -1999,6 +3641,7 @@ function gameLoop(){
 
   draw();
 
+
   requestAnimationFrame(
     gameLoop
   );
@@ -2006,9 +3649,9 @@ function gameLoop(){
 }
 
 
-/* ==============================
+/* =========================================================
    START
-================================ */
+========================================================= */
 
 updateHUD();
 
