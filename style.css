@@ -1,0 +1,860 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+
+  background:
+    linear-gradient(
+      180deg,
+      #dce8ed 0%,
+      #eef2e9 45%,
+      #d9dfcf 100%
+    );
+
+  font-family:
+    "Noto Sans JP",
+    "Noto Sans SC",
+    sans-serif;
+
+  overflow: hidden;
+
+  color: #27332d;
+}
+
+
+/* ==============================
+   全体
+================================ */
+
+#game-wrapper {
+  width: 100vw;
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* ==============================
+   HUD
+================================ */
+
+#hud {
+  height: 78px;
+
+  background:
+    rgba(250, 248, 238, 0.96);
+
+  border-bottom:
+    3px solid #495c4c;
+
+  display: flex;
+  align-items: center;
+
+  padding:
+    0 28px;
+
+  gap: 40px;
+
+  box-shadow:
+    0 3px 15px rgba(0,0,0,0.15);
+
+  z-index: 10;
+}
+
+
+.title-area {
+  min-width: 210px;
+}
+
+.small-title {
+  font-size: 11px;
+
+  letter-spacing: 3px;
+
+  color: #7c877d;
+}
+
+.game-title {
+  font-family: serif;
+
+  font-size: 26px;
+
+  font-weight: bold;
+
+  letter-spacing: 4px;
+
+  color: #314b39;
+}
+
+
+.area-area,
+.collection-area {
+  display: flex;
+  flex-direction: column;
+}
+
+.hud-label {
+  font-size: 10px;
+
+  color: #8b938d;
+
+  letter-spacing: 2px;
+}
+
+#areaName {
+  font-weight: bold;
+
+  margin-top: 4px;
+}
+
+#collectionCount {
+  font-weight: bold;
+
+  margin-top: 4px;
+}
+
+
+#libraryButton {
+  margin-left: auto;
+
+  padding:
+    11px 18px;
+
+  border:
+    1px solid #667769;
+
+  background:
+    #ffffff;
+
+  color:
+    #334b3a;
+
+  border-radius:
+    6px;
+
+  cursor: pointer;
+
+  font-weight: bold;
+}
+
+#libraryButton:hover {
+  background:
+    #edf3ed;
+}
+
+
+/* ==============================
+   GAME
+================================ */
+
+#game-container {
+  position: relative;
+
+  flex: 1;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  overflow: hidden;
+}
+
+
+#gameCanvas {
+  width: min(100vw, 1280px);
+
+  aspect-ratio:
+    16 / 9;
+
+  background:
+    #9fba88;
+
+  box-shadow:
+    0 12px 40px rgba(0,0,0,0.2);
+
+  image-rendering:
+    pixelated;
+}
+
+
+/* ==============================
+   操作
+================================ */
+
+#controls {
+  position: absolute;
+
+  top: 20px;
+  right: 24px;
+
+  padding:
+    10px 14px;
+
+  background:
+    rgba(35,45,38,0.78);
+
+  color:
+    white;
+
+  border-radius:
+    8px;
+
+  font-size:
+    12px;
+
+  display:
+    flex;
+
+  gap:
+    14px;
+}
+
+
+#controls div {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    5px;
+}
+
+
+kbd {
+  background:
+    #f7f4e9;
+
+  color:
+    #28332c;
+
+  border-radius:
+    3px;
+
+  padding:
+    3px 6px;
+
+  font-family:
+    inherit;
+
+  font-weight:
+    bold;
+}
+
+
+/* ==============================
+   E
+================================ */
+
+#interactionPrompt {
+  position: absolute;
+
+  left: 50%;
+
+  bottom: 150px;
+
+  transform:
+    translateX(-50%);
+
+  padding:
+    9px 18px;
+
+  border-radius:
+    20px;
+
+  background:
+    rgba(20,27,22,0.88);
+
+  color:
+    white;
+
+  font-size:
+    14px;
+
+  letter-spacing:
+    1px;
+}
+
+
+/* ==============================
+   会話
+================================ */
+
+#dialogueBox {
+  position: absolute;
+
+  width:
+    min(850px, 88%);
+
+  left:
+    50%;
+
+  bottom:
+    25px;
+
+  transform:
+    translateX(-50%);
+
+  background:
+    rgba(250,248,238,0.97);
+
+  border:
+    3px solid #45584a;
+
+  border-radius:
+    8px;
+
+  padding:
+    22px 28px;
+
+  box-shadow:
+    0 8px 30px rgba(0,0,0,0.3);
+}
+
+
+#speakerName {
+  color:
+    #4d7455;
+
+  font-weight:
+    bold;
+
+  font-size:
+    14px;
+
+  margin-bottom:
+    10px;
+}
+
+
+#dialogueJapanese {
+  font-size:
+    20px;
+
+  font-weight:
+    bold;
+
+  margin-bottom:
+    8px;
+}
+
+
+#dialogueChinese {
+  font-size:
+    15px;
+
+  color:
+    #68716a;
+}
+
+
+.dialogue-next {
+  text-align:
+    right;
+
+  margin-top:
+    12px;
+
+  font-size:
+    11px;
+
+  color:
+    #999;
+}
+
+
+/* ==============================
+   AREA SPLASH
+================================ */
+
+#areaSplash {
+  position: absolute;
+
+  left: 50%;
+  top: 90px;
+
+  transform:
+    translateX(-50%);
+
+  text-align:
+    center;
+
+  color:
+    white;
+
+  text-shadow:
+    0 2px 8px rgba(0,0,0,.6);
+}
+
+
+#areaSplashJapanese {
+  font-family:
+    serif;
+
+  font-size:
+    34px;
+
+  letter-spacing:
+    6px;
+}
+
+
+#areaSplashChinese {
+  margin-top:
+    5px;
+
+  font-size:
+    13px;
+
+  letter-spacing:
+    3px;
+}
+
+
+/* ==============================
+   CARD
+================================ */
+
+#cardPopup {
+  position:
+    fixed;
+
+  inset:
+    0;
+
+  background:
+    rgba(18,25,20,0.65);
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  z-index:
+    100;
+}
+
+
+.card {
+  width:
+    360px;
+
+  min-height:
+    450px;
+
+  padding:
+    35px;
+
+  background:
+    #fbf8ed;
+
+  border-radius:
+    12px;
+
+  border:
+    5px solid #536c59;
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.4);
+
+  text-align:
+    center;
+}
+
+
+.card-new {
+  color:
+    #a77b39;
+
+  letter-spacing:
+    2px;
+
+  font-size:
+    10px;
+
+  margin-bottom:
+    45px;
+}
+
+
+#cardJapanese {
+  font-family:
+    serif;
+
+  font-size:
+    45px;
+
+  font-weight:
+    bold;
+}
+
+
+#cardReading {
+  color:
+    #758078;
+
+  margin-top:
+    5px;
+}
+
+
+#cardChinese {
+  font-size:
+    21px;
+
+  margin-top:
+    30px;
+}
+
+
+#cardExample {
+  margin-top:
+    30px;
+
+  padding-top:
+    20px;
+
+  border-top:
+    1px solid #ccc;
+
+  font-size:
+    14px;
+
+  line-height:
+    1.8;
+
+  color:
+    #626b64;
+}
+
+
+#cardClose {
+  margin-top:
+    30px;
+
+  padding:
+    12px 25px;
+
+  background:
+    #526d58;
+
+  color:
+    white;
+
+  border:
+    none;
+
+  border-radius:
+    5px;
+
+  cursor:
+    pointer;
+}
+
+
+/* ==============================
+   LIBRARY
+================================ */
+
+#libraryOverlay {
+  position:
+    fixed;
+
+  inset:
+    0;
+
+  background:
+    rgba(20,28,22,.75);
+
+  z-index:
+    80;
+
+  display:
+    flex;
+
+  justify-content:
+    center;
+
+  align-items:
+    center;
+}
+
+
+#libraryPanel {
+  width:
+    min(1100px, 92vw);
+
+  height:
+    82vh;
+
+  background:
+    #f5f2e8;
+
+  border-radius:
+    12px;
+
+  padding:
+    28px;
+
+  overflow:
+    hidden;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+}
+
+
+.library-header {
+  display:
+    flex;
+
+  justify-content:
+    space-between;
+
+  align-items:
+    start;
+}
+
+
+.library-header h2 {
+  margin:
+    0;
+
+  font-family:
+    serif;
+
+  font-size:
+    30px;
+}
+
+
+.library-header p {
+  margin:
+    7px 0;
+
+  color:
+    #777;
+}
+
+
+#libraryClose {
+  border:
+    none;
+
+  background:
+    none;
+
+  font-size:
+    35px;
+
+  cursor:
+    pointer;
+}
+
+
+.library-progress {
+  margin:
+    20px 0;
+}
+
+
+.progress-bar {
+  height:
+    7px;
+
+  background:
+    #d5d7cf;
+
+  margin-top:
+    8px;
+
+  border-radius:
+    10px;
+
+  overflow:
+    hidden;
+}
+
+
+#progressFill {
+  height:
+    100%;
+
+  width:
+    0%;
+
+  background:
+    #58765f;
+}
+
+
+#libraryGrid {
+  flex:
+    1;
+
+  overflow-y:
+    auto;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(auto-fill, minmax(180px, 1fr));
+
+  gap:
+    12px;
+
+  padding-right:
+    8px;
+}
+
+
+.word-item {
+  background:
+    white;
+
+  border:
+    1px solid #d4d5cf;
+
+  border-radius:
+    6px;
+
+  padding:
+    14px;
+}
+
+
+.word-number {
+  font-size:
+    10px;
+
+  color:
+    #aaa;
+}
+
+
+.word-japanese {
+  font-size:
+    19px;
+
+  font-weight:
+    bold;
+
+  margin-top:
+    7px;
+}
+
+
+.word-reading {
+  font-size:
+    11px;
+
+  color:
+    #999;
+}
+
+
+.word-chinese {
+  margin-top:
+    8px;
+
+  font-size:
+    13px;
+}
+
+
+.word-locked {
+  opacity:
+    .25;
+}
+
+
+/* ==============================
+   TRAVEL
+================================ */
+
+#travelOverlay {
+  position:
+    fixed;
+
+  inset:
+    0;
+
+  z-index:
+    200;
+
+  background:
+    #28362d;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  color:
+    white;
+}
+
+
+.travel-box {
+  text-align:
+    center;
+}
+
+
+.travel-small {
+  font-size:
+    10px;
+
+  letter-spacing:
+    5px;
+
+  opacity:
+    .6;
+}
+
+
+#travelDestination {
+  font-family:
+    serif;
+
+  font-size:
+    35px;
+
+  margin-top:
+    12px;
+
+  letter-spacing:
+    5px;
+}
+
+
+/* ==============================
+   hidden
+================================ */
+
+.hidden {
+  display:
+    none !important;
+}
